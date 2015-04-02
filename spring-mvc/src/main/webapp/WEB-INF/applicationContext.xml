@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+	
+	<context:component-scan base-package="com.app.mvn.example.core"/>
+	<!-- 启用@AspectJ支持 -->
+	<aop:aspectj-autoproxy/>
+	<bean class="com.app.mvn.example.core.aspect.BeforeExample"/>
+	<bean class="com.app.mvn.example.core.aspect.SystemArchitecture"/>
+
+
+	<context:property-placeholder
+		file-encoding="utf-8"
+		location="WEB-INF/conf/jdbc.properties" />
+
+	<!-- Declare a transaction manager -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+		p:dataSource-ref="dataSource" />
+
+	<!-- Enable annotation style of managing transactions -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
+	<!-- define the SqlSessionFactory, notice that configLocation is not needed when you use MapperFactoryBean -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	    <property name="dataSource" ref="dataSource" />
+	    <property name="configLocation" value="WEB-INF/sqlmap-config.xml" />
+	    <property name="mapperLocations" value="WEB-INF/sqlmap/*.xml" />
+	</bean>
+	
+	<!-- scan for mappers and let them be autowired -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <property name="basePackage" value="com.app.mvn.example.core.dao.impl" />
+	</bean>
+		
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>	
+    
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+    	<property name="dataSource" ref="dataSource"/>
+    </bean>	
+
+</beans>        

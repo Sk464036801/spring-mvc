@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+	    http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- 加载Spring的全局配置文件 -->
+	<import resource="applicationContext.xml" />
+
+	<!-- SpringMVC配置 -->
+	<!-- 通过component-scan 让Spring扫描org.swinglife.controller下的所有的类， 让Spring的代码注解生效 -->
+	<context:component-scan base-package="com.app.mvn.example.controller" />
+	<!-- 相当于注册了DefaultAnnotationHandlerMapping和AnnotationMethodHandlerAdapter两个bean， 
+		配置一些messageconverter。即解决了@Controller注解的使用前提配置。 -->
+	<mvc:annotation-driven />
+	
+	<!-- 处理静态资源 -->
+	<mvc:resources location="/WEB-INF/resource/" mapping="/resource/**"/>
+
+	<!-- 配置使用tiles -->
+	<!-- <bean id="urlViewResolver"
+		class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.tiles3.TilesView" />
+		<property name="order" value="1" />
+	</bean> -->
+
+	<bean id="tilesConfigurer"
+		class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
+		<property name="definitions">
+			<list>
+				<value>/WEB-INF/defs/tiles.xml</value>
+			</list>
+		</property>
+		<!-- <property name="preparerFactoryClass" value="org.springframework.web.servlet.view.tiles2.SpringBeanPreparerFactory"/> -->
+	</bean>
+	
+	<bean id="tilesResolver" 
+	class="org.springframework.web.servlet.view.tiles3.TilesViewResolver">
+			<property name="viewClass"
+			value="org.springframework.web.servlet.view.tiles3.TilesView" />
+	</bean>
+
+	<bean id="resourceBundleViewResolver"
+		class="org.springframework.web.servlet.view.ResourceBundleViewResolver">
+		<property name="basename" value="views" />
+		<property name="defaultParentView" value="tilesResolver" />
+		<property name="order" value="2" />
+	</bean>
+
+	<!-- 配置SpringMVC的视图渲染器， 让其前缀为:/page/ 后缀为.jsp 将视图渲染到/page/<method返回值>.jsp中 -->
+	<!-- 在配置多中视图解决方案时， InternalResourceViewResolver一定最后去进行匹配，否则会抛出异常，order越 
+		小越先进行匹配。 -->
+	<bean id="jspViewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+		p:prefix="/WEB-INF/views/" p:suffix=".jsp" p:order="3" />
+
+	<!-- 文件上传配置 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+
+		<!-- one of the properties available; the maximum file size in bytes -->
+		<property name="maxUploadSize" value="100000" />
+
+	</bean>
+
+</beans>   

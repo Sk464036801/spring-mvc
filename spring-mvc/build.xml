@@ -1,0 +1,120 @@
+<?xml version="1.0" ?>
+<project name="spring-mvc" basedir="." default="deploy">
+
+	<property name="message" value="Building the project." />
+	<property name="webapp.name" value="spring-mvc"/>
+
+	<property name="src.dir" location="src/main/java" />
+	<property name="lib.dir" location="lib" />
+	<property name="output" location="target/classes"/>
+	<property name="dist.dir" location="dist" />
+	<property name="dist.file" value="spring-mvc.jar"/>
+	<property name="webroot.dir" location="src/main/webapp" />
+	<property name="url" value="http://localhost:8081/manager"/>
+
+
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+
+
+	<target name="main" depends="init, compile">
+		<echo>
+            ${message}
+        </echo>
+	</target>
+
+	<target name="init">
+		<mkdir dir="${output}" />
+		<mkdir dir="${webroot.dir}/WEB-INF/lib"/>
+		<mkdir dir="${webroot.dir}/WEB-INF/log"/>
+	</target>
+
+	<target name="compile" depends="init">
+		<javac srcdir="${src.dir}" destdir="${output}" classpathref="compile.classpath" debug="true" includeantruntime="false"/>
+	</target>
+
+	<target name="native2ascii">
+		<copy todir="${output}">
+			<fileset dir="${src.dir}">
+				<include name="*.properties"/>
+				<include name="*.zh"/>
+			</fileset>
+		</copy>
+		<native2ascii encoding="GBK" src="${output}" dest="${output}"
+				   includes="**/*.zh" ext="_zh.properties"/>
+
+		<copy todir="${output}">
+			<fileset dir="${output}"/>
+			<mapper type="glob" from="*_zh.properties" to="*.properties"/>
+		</copy>
+
+	</target>
+
+	<target name="package" depends="init,compile,native2ascii">
+		<mkdir dir="${dist.dir}"/>
+		<jar  destfile="${dist.dir}/${dist.file}" basedir="${output}" excludes="com/remec/tuna/smp/test/**">
+		</jar>
+	</target>
+
+
+	<target name="publish" depends="package">
+
+		<delete  dir="${webroot.dir}/WEB-INF/lib" quiet="true" />
+
+		<copy todir="${webroot.dir}/WEB-INF/lib">
+			<fileset refid="tuna-smp.web.lib"/>
+		</copy>
+		<copy todir="${webroot.dir}/WEB-INF/lib">
+			<fileset refid="tuna-smp.web.deplib"/>
+		</copy>
+		<copy todir="${webroot.dir}/share">
+			<fileset dir="${jspshare.dir}"/>
+		</copy>
+		<copy todir="${webroot.dir}/sharejs">
+			<fileset dir="${sharejs.dir}"/>
+		</copy>
+		<copy todir="${webroot.dir}/sharecss">
+			<fileset dir="${sharecss.dir}"/>
+		</copy>
+		<zip destfile="${dist.dir}/${webapp.name}.war" basedir="${webroot.dir}"/>
+
+	</target>
+
+
+	<target name="deploy" depends="package">
+		<mkdir dir="${tomcat.home}/webapps/${webapp.name}"/>
+		<copy todir="${tomcat.home}/webapps/${webapp.name}">
+			<fileset dir="${webroot.dir}"/>
+		</copy>
+		<copy todir="${tomcat.home}/webapps/${webapp.name}/WEB-INF/lib">
+			<fileset dir="${lib.dir}"/>
+		</copy>
+		<copy todir="${tomcat.home}/webapps/${webapp.name}/WEB-INF/lib">
+			<fileset dir="${dist.dir}"/>
+		</copy>
+	</target>
+
+	<target name="install">
+
+		<deploy url="${url}" username="${manager.username}" password="${manager.password}" path="/meg" localWar="${dist.dir}/meg.war"/>
+
+	</target>
+
+	<target name="junit" depends="compile">
+		<ant antfile="junit-build.xml" target="junitrun" inheritrefs="true">
+			<property name="junit.classpath" value="run.classpath"/>
+		</ant>
+
+		<ant antfile="junit-build.xml" target="exitOnTestFail" inheritrefs="true">
+		</ant>
+	</target>
+
+
+	<target name="emma" depends="compile">
+		<ant antfile="junit-build.xml" target="emmarun" inheritrefs="true"/>
+	</target>
+
+</project>
